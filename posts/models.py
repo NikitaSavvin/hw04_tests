@@ -7,22 +7,19 @@ class Group(models.Model):
         'Заголовок',
         max_length=200,
         help_text='Заголовок группы'
-        )
+    )
     slug = models.SlugField(
         'Адрес для страницы с группой',
         max_length=200,
         unique=True,
-        help_text=('Укажите адрес для страницы группы. Используйте только '
-                   'латиницу, цифры, дефисы и знаки подчёркивания')
+        help_text=(
+            'Укажите адрес для страницы группы. Используйте только '
+            'латиницу, цифры, дефисы и знаки подчёркивания'
         )
+    )
     description = models.TextField(
         'Описание',
         help_text=('Дайте описание группы')
-    )
-    name_group = models.TextField(
-        'Название группы',
-        max_length=200,
-        help_text='Дайте название вашей группе'
     )
 
     def __str__(self):

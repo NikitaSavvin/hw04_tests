@@ -14,7 +14,7 @@ class PostFormModelTest(TestCase):
                 title='Тестовый заголовок',
                 description='Тестовое описание',
                 slug='test-group',
-                name_group='Тестовое название'
+
         )
         cls.post = Post.objects.create(
             text='Тестовый текст потса',
@@ -25,7 +25,7 @@ class PostFormModelTest(TestCase):
 
     def setUp(self):
         self.guest_client = Client()
-        self.user = User.objects.create(username='Никита')
+        self.user = User.objects.create(username='Nikita')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
@@ -35,13 +35,13 @@ class PostFormModelTest(TestCase):
             'title': 'Заголовок',
             'slug': 'Адрес для страницы с группой',
             'description': 'Описание',
-            'name_group': 'Название группы'
         }
 
         for value, expected in field_verboses.items():
             with self.subTest(value=value):
                 self.assertEqual(
-                    group._meta.get_field(value).verbose_name, expected)
+                    group._meta.get_field(value).verbose_name, expected
+                )
 
     def test_verbose_name_post(self):
         post = PostFormModelTest.post
@@ -54,26 +54,26 @@ class PostFormModelTest(TestCase):
                 self.assertEqual(
                     post._meta.get_field(value).verbose_name, expected)
 
-    def test_help_text_group(self):
+    def test_help_text(self):
         group = PostFormModelTest.group
-        field_help_texts = {
-            'title': 'Заголовок группы',
-            'slug': ('Укажите адрес для страницы группы. Используйте только '
-                     'латиницу, цифры, дефисы и знаки подчёркивания'),
-            'description': 'Дайте описание группы',
-            'name_group': 'Дайте название вашей группе'
-        }
-        for value, expected in field_help_texts.items():
-            with self.subTest(value=value):
-                self.assertEqual(
-                    group._meta.get_field(value).help_text, expected)
-
-    def test_help_text_post(self):
         post = PostFormModelTest.post
         field_help_texts = {
+            'title': 'Заголовок группы',
+            'slug': (
+                     'Укажите адрес для страницы группы. Используйте только '
+                     'латиницу, цифры, дефисы и знаки подчёркивания'
+                     ),
+            'description': 'Дайте описание группы',
             'text': 'Напишите текст поста',
         }
         for value, expected in field_help_texts.items():
             with self.subTest(value=value):
-                self.assertEqual(
-                    post._meta.get_field(value).help_text, expected)
+                if value == 'text':
+                    post._meta.get_field(value).help_text, expected
+                else:
+                    group._meta.get_field(value).help_text, expected
+
+    def test_object_text_len_field(self):
+        post = self.post
+        expected_text = post.text[:15]
+        self.assertEqual(expected_text, str(post))

@@ -11,15 +11,13 @@ class PostFormTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.guest_client = Client()
-        cls.user = User.objects.create(username='Никита')
+        cls.user = User.objects.create(username='Nikita')
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
         cls.group = Group.objects.create(
                 title='Тестовый заголовок',
                 description='Тестовое описание',
                 slug='test-group',
-                name_group='Тестовое название'
         )
         cls.post = Post.objects.create(
             text='Тестовый текст потса',
@@ -32,25 +30,42 @@ class PostFormTests(TestCase):
         post_count = Post.objects.count()
 
         form_data = {
-            "group": '1',
-            "text": 'Тестовый текст.',
+            'group': self.group.id,
+            'text': 'Тестовый текст.',
+            'author': self.post.author
         }
         response = self.authorized_client.post(
             reverse('post_new'),
             data=form_data,
             follow=True,
         )
-        self.assertRedirects(response, "/")
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(Post.objects.count(), post_count+1)
-        self.assertTrue(Group.objects.filter(slug='test-group').exists())
         self.assertTrue(Post.objects.filter(
-            text='Тестовый текст потса').exists())
+            text='Тестовый текст потса',
+            group=self.group.id,
+            author=self.post.author).exists())
 
     def test_edit_post(self):
-        form_data = {'text': 'Тестовый текст.'}
-        PostFormTests.authorized_client.post(
-            reverse('post_edit',
-                    kwargs={'username': 'Никита', 'post_id': '1'}),
-            data=form_data,
-            follow=True,)
-        self.assertEqual(Post.objects.first().text, form_data['text'])
+        post_count = Post.objects.count()
+        form_data = {
+            'group': self.group.id,
+            'text': self.post.text,
+            'author': self.post.author
+        }
+        self.authorized_client.post(
+            reverse(
+                'post_edit',
+                kwargs={
+                    'username': self.post.author, 'post_id': self.post.id
+                }
+            ),
+            data=form_data, follow=True
+        )
+        self.assertTrue(Post.objects.filter(
+            text='Тестовый текст потса',
+            group=self.group.id,
+            author=self.post.author
+                                     ).exists()
+        )
+        self.assertEqual(Post.objects.count(), post_count)

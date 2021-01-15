@@ -20,5 +20,5 @@ class PostForm(forms.ModelForm):
     def clean_subject(self):
         data = self.cleaned_data['text']
         if data == '':
-            raise forms.ValidationError("Вы должны заполнить это поле")
+            raise forms.ValidationError('Вы должны заполнить это поле')
         return data

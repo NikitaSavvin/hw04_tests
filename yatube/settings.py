@@ -6,11 +6,12 @@ SECRET_KEY = '06egicce4&rnuoba&m1@&c_q4vjl&4t5xbl8bw2crs170p4=sp'
 
 DEBUG = True
 
-ALLOWED_HOSTS = [ 
-    "localhost",
-    "127.0.0.1",
-    "[::1]",
-    "testserver",]
+ALLOWED_HOSTS = [
+    'localhost',
+    '127.0.0.1',
+    '[::1]',
+    'testserver'
+]
 
 INSTALLED_APPS = [
     'about',
@@ -46,7 +47,6 @@ TEMPLATES = [
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
-                'yatube.context.year',
                 'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',

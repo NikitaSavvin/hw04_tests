@@ -19,13 +19,12 @@ class PostFormModelTest(TestCase):
                 title='Тестовый заголовок',
                 description='Тестовое описание',
                 slug='test-slug',
-                name_group='Тестовое название'
         )
         cls.post = Post.objects.create(
             text='Тестовый текст потса',
             pub_date='2020-12-15',
             author=cls.user,
-            group=cls.group
+            group=cls.group,
         )
         cls.authorized_client_1 = Client()
         cls.user_1 = User.objects.create(username='Alena')
@@ -39,54 +38,77 @@ class PostFormModelTest(TestCase):
         response = self.guest_client.get('/')
         self.assertEqual(response.status_code, 200)
 
-    def test_group_url_exists_at_desired_location(self):
-        response = self.authorized_client.get('/group/test-slug/')
-        self.assertEqual(response.status_code, 200)
+    def test_authorized_client(self):
+        pages = {
+            reverse('index'): 200,
+            reverse('post_new'): 200,
+            reverse('group_posts', args=[self.group.slug]): 200,
+            reverse('profile', args=[self.user]): 200,
+            reverse('post', args=[self.user.username, self.post.id]): 200,
+            reverse(
+                'post_edit', args=[self.user.username, self.post.id]
+            ): 200
+        }
+        for url, status in pages.items():
+            with self.subTest(url=url):
+                response = self.authorized_client.get(url)
+                self.assertEqual(response.status_code, status)
 
-    def test_new_url_exists_at_desired_location(self):
-        response = self.authorized_client.get('/new/')
-        self.assertEqual(response.status_code, 200)
+    def test_guest_client(self):
+        pages = {
+            reverse('index'): 200,
+            reverse('post_new'): 302,
+            reverse('group_posts', args=[self.group.slug]): 200,
+            reverse('profile', args=[self.user]): 200,
+            reverse('post', args=[self.user, self.post.id]): 200,
+            reverse('post_edit', args=[self.user, self.post.id]): 302,
+        }
+        for url, status in pages.items():
+            with self.subTest(url=url):
+                response = self.guest_client.get(url)
+                self.assertEqual(response.status_code, status)
 
     def test_list_url_redirect_anonymous_on_admin_login(self):
-        response = self.guest_client.get('/new/', follow=True)
+        response = self.guest_client.get(reverse('post_new'), follow=True)
         self.assertRedirects(
-            response, '/auth/login/?next=/new/')
-
-    def test_profile_exists_at_desired_location(self):
-        response = self.authorized_client.get('/Nikita/')
-        self.assertEqual(response.status_code, 200)
-
-    def test_post_view_exists_at_desired_location(self):
-        response = self.authorized_client.get('/Nikita/1/')
-        self.assertEqual(response.status_code, 200)
+            response, reverse('login')+'?next='+reverse('post_new'))
 
     def test_post_edit_not_authorized(self):
-        response = self.guest_client.get('/Nikita/1/edit/', follow=True)
+        response = self.guest_client.get(
+            reverse(
+                'post_edit',
+                kwargs={'username': self.user, 'post_id': self.post.id}
+            ), follow=True
+        )
         self.assertRedirects(
-            response, '/auth/login/?next=/Nikita/1/edit/')
+            response,
+            reverse('login')+'?next='+reverse(
+                                        'post_edit',
+                                        args=[self.user, self.post.id]
+                                      )
+        )
 
     def test_post_edit_authorized_user_not_the_author(self):
-        response = self.authorized_client_1.post(
+        response = self.authorized_client_1.get(
             reverse('post_edit',
-                    kwargs={'username': 'Nikita', 'post_id': '1'}),
+                    kwargs={'username': self.user, 'post_id': self.post.id}),
             follow=True)
         self.assertRedirects(
-            response, '/Nikita/1/')
-
-    def test_post_edit_authorized_user_is_the_author(self):
-        response = self.authorized_client.get('/Nikita/1/edit/')
-        self.assertEqual(response.status_code, 200)
+            response, reverse('post', args=[self.user, self.post.id])
+        )
 
     def test_urls_uses_correct_template(self):
-        '''С тестом не справился'''
         templates_url_names = {
-            'index.html': reverse('index'),
-            'group.html': '/group/test-group/',
-            'post_new.html': '/new/',
-            'post_new.html': '/Nikita/1/edit/',
-            'post.html': '/Nikita/1/',
+            reverse('index'): 'index.html',
+            reverse('post_new'): 'post_new.html',
+            reverse('group_posts', args=[self.group.slug]): 'group.html',
+            reverse('profile', args=[self.user]): 'profile.html',
+            reverse('post', args=[self.user, self.post.id]): 'post.html',
+            reverse(
+                'post_edit', args=[self.user, self.post.id]
+            ): 'post_new.html'
         }
-        for template, reverse_name in templates_url_names.items():
-            with self.subTest():
+        for reverse_name, template in templates_url_names.items():
+            with self.subTest(reverse_name=reverse_name):
                 response = self.authorized_client.get(reverse_name)
                 self.assertTemplateUsed(response, template)
