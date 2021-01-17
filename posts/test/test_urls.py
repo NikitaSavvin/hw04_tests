@@ -11,7 +11,6 @@ class PostFormModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.guest_client = Client()
         cls.user = User.objects.create(username='Nikita')
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
@@ -35,7 +34,7 @@ class PostFormModelTest(TestCase):
         )
 
     def test_index_url_exists_at_desired_location(self):
-        response = self.guest_client.get('/')
+        response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
 
     def test_authorized_client(self):
@@ -54,7 +53,7 @@ class PostFormModelTest(TestCase):
                 response = self.authorized_client.get(url)
                 self.assertEqual(response.status_code, status)
 
-    def test_guest_client(self):
+    def test_client(self):
         pages = {
             reverse('index'): 200,
             reverse('post_new'): 302,
@@ -65,28 +64,21 @@ class PostFormModelTest(TestCase):
         }
         for url, status in pages.items():
             with self.subTest(url=url):
-                response = self.guest_client.get(url)
+                response = self.client.get(url)
                 self.assertEqual(response.status_code, status)
 
     def test_list_url_redirect_anonymous_on_admin_login(self):
-        response = self.guest_client.get(reverse('post_new'), follow=True)
+        response = self.client.get(reverse('post_new'), follow=True)
         self.assertRedirects(
             response, reverse('login')+'?next='+reverse('post_new'))
 
     def test_post_edit_not_authorized(self):
-        response = self.guest_client.get(
-            reverse(
-                'post_edit',
-                kwargs={'username': self.user, 'post_id': self.post.id}
-            ), follow=True
+        n = reverse(
+            'post_edit',
+            kwargs={'username': self.user, 'post_id': self.post.id}
         )
-        self.assertRedirects(
-            response,
-            reverse('login')+'?next='+reverse(
-                                        'post_edit',
-                                        args=[self.user, self.post.id]
-                                      )
-        )
+        response = self.client.get(n, follow=True)
+        self.assertRedirects(response, reverse('login')+'?next='+n)
 
     def test_post_edit_authorized_user_not_the_author(self):
         response = self.authorized_client_1.get(

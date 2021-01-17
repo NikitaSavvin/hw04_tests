@@ -18,13 +18,12 @@ class PostFormModelTest(TestCase):
         )
         cls.post = Post.objects.create(
             text='Тестовый текст потса',
-            pub_date='2020-12-15',
             author=User.objects.create(username='testuser'),
             group=cls.group
         )
 
     def setUp(self):
-        self.guest_client = Client()
+        self.client = Client()
         self.user = User.objects.create(username='Nikita')
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
@@ -75,5 +74,11 @@ class PostFormModelTest(TestCase):
 
     def test_object_text_len_field(self):
         post = self.post
-        expected_text = post.text[:15]
-        self.assertEqual(expected_text, str(post))
+        group = self.group
+        expected_text = {
+            post: self.post.text[:15],
+            group: self.group.title
+        }
+        for model, status in expected_text.items():
+            with self.subTest(model=model):
+                self.assertEqual(status, str(model))

@@ -21,7 +21,6 @@ class PostFormTests(TestCase):
         )
         cls.post = Post.objects.create(
             text='Тестовый текст потса',
-            pub_date='2020-12-15',
             author=cls.user,
             group=cls.group
         )
@@ -31,8 +30,7 @@ class PostFormTests(TestCase):
 
         form_data = {
             'group': self.group.id,
-            'text': 'Тестовый текст.',
-            'author': self.post.author
+            'text': self.post.text,
         }
         response = self.authorized_client.post(
             reverse('post_new'),
@@ -42,30 +40,28 @@ class PostFormTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(Post.objects.count(), post_count+1)
         self.assertTrue(Post.objects.filter(
-            text='Тестовый текст потса',
+            text=self.post.text,
             group=self.group.id,
             author=self.post.author).exists())
 
     def test_edit_post(self):
         post_count = Post.objects.count()
         form_data = {
-            'group': self.group.id,
-            'text': self.post.text,
-            'author': self.post.author
+            'group': 5,
+            'text': 'Измененный текст',
         }
         self.authorized_client.post(
             reverse(
                 'post_edit',
-                kwargs={
-                    'username': self.post.author, 'post_id': self.post.id
-                }
+                args=[self.post.author, self.post.id]
             ),
             data=form_data, follow=True
         )
-        self.assertTrue(Post.objects.filter(
-            text='Тестовый текст потса',
-            group=self.group.id,
-            author=self.post.author
-                                     ).exists()
+        self.assertTrue(
+            Post.objects.filter(
+                text=self.post.text,
+                group=self.group.id,
+                author=self.post.author
+            ).exists()
         )
         self.assertEqual(Post.objects.count(), post_count)

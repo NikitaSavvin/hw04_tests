@@ -14,6 +14,7 @@ ALLOWED_HOSTS = [
 ]
 
 INSTALLED_APPS = [
+    'sorl.thumbnail',
     'about',
     'users',
     'posts',

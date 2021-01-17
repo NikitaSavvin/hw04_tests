@@ -9,5 +9,6 @@
     </h3>
     <p>{{ post.text|linebreaksbr }}</p>
     <hr>
+        {% include "includes/paginator.html" %} 
     {% endfor %}
 {% endblock %}

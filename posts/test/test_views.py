@@ -12,7 +12,6 @@ class PostFormModelTest(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.guest_client = Client()
         cls.user = User.objects.create(username='Nikita')
         cls.authorized_client = Client()
         cls.authorized_client.force_login(cls.user)
@@ -20,7 +19,6 @@ class PostFormModelTest(TestCase):
                 title='Тестовый заголовок',
                 description='Тестовое описание',
                 slug='test-slug',
-
         )
         cls.post = Post.objects.create(
             text='Тестовый текст потса',
@@ -59,9 +57,9 @@ class PostFormModelTest(TestCase):
         )
         for reverse_name in list_of_pages:
             with self.subTest(reverse_name=reverse_name):
-                response = self.authorized_client.get(reverse_name)
+                response = self.client.get(reverse_name)
                 paginator = response.context.get('paginator')
-                if paginator is not None:
+                if paginator is not None and Post.objects.count() == 1:
                     post_n = response.context['page'][0]
                 else:
                     post_n = response.context['post']
@@ -74,56 +72,42 @@ class PostFormModelTest(TestCase):
                 self.assertEqual(pub_date_0, self.post.pub_date)
                 self.assertEqual(post_group_0, self.post.group)
 
-    def test_post_new_page_show_correct_context(self):
-        response = self.authorized_client.get(reverse('post_new'))
-        form_fields = {
-            'group': forms.fields.ChoiceField,
-            'text': forms.fields.CharField,
-        }
-        for value, expected in form_fields.items():
-            with self.subTest(value=value):
-                form_field = response.context.get('form').fields.get(value)
-                self.assertIsInstance(form_field, expected)
-
-    def test_edit_correct_context(self):
-        response = self.authorized_client.get(
+    def test_forms_new_and_edit(self):
+        urls = [
+            reverse('post_new'),
             reverse(
                 'post_edit',
-                kwargs={
-                    'username': self.user,
-                    'post_id': self.post.id
-                }
+                args=[self.user, self.post.id]
             )
-        )
+        ]
         form_fields = {
-            'group': forms.fields.ChoiceField,
-            'text': forms.fields.CharField,
+            "text": forms.fields.CharField,
+            "group": forms.fields.ChoiceField,
+            #"image": forms.fields.ImageField,
         }
-        for value, expected in form_fields.items():
-            with self.subTest(value=value):
-                form_field = response.context.get('form').fields.get(value)
-                self.assertIsInstance(form_field, expected)
+        for url in urls:
+            with self.subTest(url=url):
+                response = self.authorized_client.get(url)
+                for value, expected in form_fields.items():
+                    form_field = response.context["form"].fields.get(value)
+                    self.assertIsInstance(form_field, expected)
 
     def test_post_not_in_group_off(self):
         response = self.authorized_client.get(
-            reverse("group_posts",
-                    args=[self.group_1.slug])
+            reverse("group_posts", args=[self.group_1.slug])
         )
         response_posts = response.context.get("page")
-        self.assertEqual(len(response_posts.object_list), 0)
+        self.assertEqual(response_posts.object_list.count(), 0)
 
     def test_post_in_pages(self):
         pages = {
-            "index": reverse("index"),
-            "group": (
-                reverse("group_posts", kwargs={"slug": self.group.slug})
-            )
+            'index': reverse("index"),
+            'group_posts': reverse("group_posts", args=[self.group.slug])
         }
-        for page, slugs in pages.items():
-            with self.subTest(page=page):
+        for names, slugs in pages.items():
+            with self.subTest(names=names):
                 response = self.authorized_client.get(slugs)
-                response_posts = response.context.get("page")
-                self.assertEqual(len(response_posts.object_list), 1)
+                self.assertEqual((response.context.get('paginator').count), 1)
 
 
 class PaginatorViewTest(TestCase):

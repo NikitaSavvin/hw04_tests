@@ -1,14 +1,15 @@
-{% extends "base.html" %}
-{% block title %}Последние обновления на сайте{% endblock %}
-{% block header %}Последние обновления на сайте{% endblock %}
-{% block content %}
+{% extends "base.html" %} 
+{% block title %} Последние обновления {% endblock %}
+{% load cache %}
 
-    {% for post in page %}
-    <h3>
-        Автор: {{ post.author }}, Дата публикации: {{ post.pub_date|date:"d M Y" }}
-    </h3>
-    <p>{{ post.text|linebreaksbr }}</p>
-    {% if not forloop.last %}<hr>{% endif %}
-    {% endfor %}
-    {% include "includes/paginator.html" %}
-{% endblock %} 
+{% block content %}
+    <div class="container">
+           <h1> Последние обновления на сайте</h1>
+                {% for post in page %}
+                    {% include "includes/post_item.html" with post=post %}
+                {% endfor %}
+    </div>
+        {% if page.has_other_pages %}
+            {% include "includes/paginator.html" %} 
+        {% endif %}
+{% endblock %}
