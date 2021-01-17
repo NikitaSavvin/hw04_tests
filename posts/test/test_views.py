@@ -81,28 +81,28 @@ class PostFormModelTest(TestCase):
             )
         ]
         form_fields = {
-            "text": forms.fields.CharField,
-            "group": forms.fields.ChoiceField,
-            #"image": forms.fields.ImageField,
+            'text': forms.fields.CharField,
+            'group': forms.fields.ChoiceField,
+            #'image': forms.fields.ImageField,
         }
         for url in urls:
             with self.subTest(url=url):
                 response = self.authorized_client.get(url)
                 for value, expected in form_fields.items():
-                    form_field = response.context["form"].fields.get(value)
+                    form_field = response.context['form'].fields.get(value)
                     self.assertIsInstance(form_field, expected)
 
     def test_post_not_in_group_off(self):
         response = self.authorized_client.get(
-            reverse("group_posts", args=[self.group_1.slug])
+            reverse('group_posts', args=[self.group_1.slug])
         )
-        response_posts = response.context.get("page")
+        response_posts = response.context.get('page')
         self.assertEqual(response_posts.object_list.count(), 0)
 
     def test_post_in_pages(self):
         pages = {
-            'index': reverse("index"),
-            'group_posts': reverse("group_posts", args=[self.group.slug])
+            'index': reverse('index'),
+            'group_posts': reverse('group_posts', args=[self.group.slug])
         }
         for names, slugs in pages.items():
             with self.subTest(names=names):
