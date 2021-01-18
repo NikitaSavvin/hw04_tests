@@ -33,10 +33,6 @@ class PostFormModelTest(TestCase):
             author=cls.user_1,
         )
 
-    def test_index_url_exists_at_desired_location(self):
-        response = self.client.get('/')
-        self.assertEqual(response.status_code, 200)
-
     def test_authorized_client(self):
         pages = {
             reverse('index'): 200,
@@ -67,18 +63,17 @@ class PostFormModelTest(TestCase):
                 response = self.client.get(url)
                 self.assertEqual(response.status_code, status)
 
-    def test_list_url_redirect_anonymous_on_admin_login(self):
-        response = self.client.get(reverse('post_new'), follow=True)
-        self.assertRedirects(
-            response, reverse('login')+'?next='+reverse('post_new'))
-
-    def test_post_edit_not_authorized(self):
-        n = reverse(
-            'post_edit',
-            kwargs={'username': self.user, 'post_id': self.post.id}
-        )
-        response = self.client.get(n, follow=True)
-        self.assertRedirects(response, reverse('login')+'?next='+n)
+    def test_redirect(self):
+        pages = {
+            'post_new': reverse('post_new'),
+            'post_edit': reverse(
+                            'post_edit', args=[self.user, self.post.id]
+                         ),
+        }
+        for names, url in pages.items():
+            with self.subTest(names=names):
+                response = self.client.get(url, follow=True)
+                self.assertRedirects(response, reverse('login')+'?next='+url)
 
     def test_post_edit_authorized_user_not_the_author(self):
         response = self.authorized_client_1.get(

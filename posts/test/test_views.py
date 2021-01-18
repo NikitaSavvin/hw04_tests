@@ -59,7 +59,7 @@ class PostFormModelTest(TestCase):
             with self.subTest(reverse_name=reverse_name):
                 response = self.client.get(reverse_name)
                 paginator = response.context.get('paginator')
-                if paginator is not None and Post.objects.count() == 1:
+                if paginator is not None and paginator.count == 1:
                     post_n = response.context['page'][0]
                 else:
                     post_n = response.context['post']

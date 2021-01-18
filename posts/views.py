@@ -70,8 +70,8 @@ def post_view(request, username, post_id):
 
 @login_required
 def post_edit(request, username, post_id):
-    profile = get_object_or_404(User, username=username)
     post = get_object_or_404(Post, pk=post_id, author__username=username)
+    profile = get_object_or_404(User, username=post.author)
     if request.user != profile:
         return redirect('post', username=username, post_id=post_id)
     form = PostForm(
